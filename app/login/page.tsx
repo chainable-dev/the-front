@@ -140,7 +140,7 @@ export default function LoginPage() {
         <div className="text-center">
           <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Don't have an account?{' '}
-            <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign up
             </Link>
           </p>

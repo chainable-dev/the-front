@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
-import { DragDropContext, Droppable } from 'react-beautiful-dnd';
+import React from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
-interface Column {
-  id: string;
-  title: string;
-  taskIds: string[];
+interface BoardProps {
+  // Add any props you need
 }
 
-interface Task {
-  id: string;
-  content: string;
-}
-
-const Board: React.FC = () => {
-  const [columns, setColumns] = useState<{ [key: string]: Column }>({
-    // Initialize your columns here
-  });
-  const [tasks, setTasks] = useState<{ [key: string]: Task }>({
-    // Initialize your tasks here
-  });
-
+const Board: React.FC<BoardProps> = () => {
   const onDragEnd = (result: any) => {
-    // Implement drag and drop logic here
+    // Implement drag end logic
   };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      {/* Implement your board structure here */}
+      <Droppable droppableId="board" direction="horizontal" type="COLUMN">
+        {(provided) => (
+          <div
+            {...provided.droppableProps}
+            ref={provided.innerRef}
+            style={{ display: 'flex' }}
+          >
+            {/* Add your columns here */}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
     </DragDropContext>
   );
 };
