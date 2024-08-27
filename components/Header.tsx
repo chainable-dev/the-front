@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import styles from './Header.module.css';
+import styles from './header.module.css';
 
 const Header: React.FC = () => {
   const router = useRouter();
