@@ -1,24 +1,50 @@
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', params.id)
+    .single();
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
-  const { status, position } = await request.json();
-
-  try {
-    const client = await pool.connect();
-    await client.query(
-      'UPDATE tasks SET status = $1, position = $2 WHERE id = $3',
-      [status, position, id]
-    );
-    client.release();
-    return NextResponse.json({ message: 'Task updated successfully' });
-  } catch (error) {
-    console.error('Error updating task:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json(data);
+}
+
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const body = await request.json();
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .update(body)
+    .eq('id', params.id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', params.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ message: 'Task deleted successfully' });
 }
