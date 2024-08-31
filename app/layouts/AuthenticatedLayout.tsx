@@ -1,16 +1,11 @@
 import React from 'react';
-import Header from '@/components/Header';
-import styles from './AuthenticatedLayout.module.css';
+import Sidebar from '@/components/Sidebar';
 
-interface AuthenticatedLayoutProps {
-  children: React.ReactNode;
-}
-
-const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) => {
+const AuthenticatedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className={styles.layout}>
-      <Header />
-      <main className={styles.main}>{children}</main>
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 p-4 md:ml-64">{children}</main>
     </div>
   );
 };
