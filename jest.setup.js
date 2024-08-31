@@ -15,5 +15,20 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Mock console.error to prevent it from cluttering test output
+// Mock console.error and console.warn to prevent them from cluttering test output
 console.error = jest.fn();
+console.warn = jest.fn();
+
+// Add polyfills
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}))
+
+// Mock window.location
+delete window.location
+window.location = {
+  origin: 'http://localhost:3000',
+  ...window.location,
+}
