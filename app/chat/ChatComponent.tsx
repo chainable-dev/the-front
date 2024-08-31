@@ -1,15 +1,23 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-import { useChat } from 'ai/react';
+import React, { useState, useEffect } from 'react';
+import { FaPaperPlane, FaSave, FaBars, FaCog, FaCheck, FaTimes } from 'react-icons/fa';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { FaBars, FaCog, FaSave, FaCheck, FaTimes } from 'react-icons/fa';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import toast, { Toaster } from 'react-hot-toast';
+import { useChat } from 'ai/react';
+import { useSession } from 'next-auth/react';
 
 interface ChatHistory {
   id: string;
   title: string;
+}
+
+interface ApiKeys {
+  openai: string;
+  anthropic: string;
+  mistral: string;
+  gemini: string;
+  ollama: string;
 }
 
 const models = [
@@ -21,13 +29,18 @@ const models = [
   { id: 'llama2', name: 'Llama 2', provider: 'ollama' },
 ];
 
-export default function ChatComponent({ userId }: { userId: string }) {
+interface ChatComponentProps {
+  userId: string;
+}
+
+export default function ChatComponent({ userId }: ChatComponentProps) {
+  const { data: session } = useSession();
   const { theme } = useTheme();
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState(models[0].id);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [apiKeys, setApiKeys] = useState({
+  const [apiKeys, setApiKeys] = useState<ApiKeys>({
     openai: '',
     anthropic: '',
     mistral: '',
@@ -37,7 +50,11 @@ export default function ChatComponent({ userId }: { userId: string }) {
   const [savedResponses, setSavedResponses] = useState<Set<string>>(new Set());
   const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
     api: '/api/chat',
-    body: { model: selectedModel, provider: models.find(m => m.id === selectedModel)?.provider },
+    body: { 
+      model: selectedModel, 
+      provider: models.find(m => m.id === selectedModel)?.provider,
+      apiKey: apiKeys[models.find(m => m.id === selectedModel)?.provider as keyof typeof apiKeys]
+    },
   });
   const supabase = createClientComponentClient();
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
@@ -116,13 +133,29 @@ export default function ChatComponent({ userId }: { userId: string }) {
     // TODO: Fetch messages for this chat from the database
   };
 
-  const handleChatSubmit = async (e: React.FormEvent) => {
+  const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedChatId) {
       await createNewChat();
     }
     handleSubmit(e);
-    // TODO: Save the new message to the database
+    
+    // Save the new message to the database
+    if (selectedChatId) {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          chat_id: selectedChatId,
+          role: 'user',
+          content: input,
+          user_id: userId
+        });
+
+      if (error) {
+        console.error('Error saving message:', error);
+        toast.error('Failed to save message. Please try again.');
+      }
+    }
   };
 
   const saveApiKeys = async () => {
@@ -145,7 +178,7 @@ export default function ChatComponent({ userId }: { userId: string }) {
   };
 
   const handleSaveResponse = async (messageId: string) => {
-    const messageToSave = messages.find(m => m.id === messageId);
+    const messageToSave = messages.find((m: { id: string }) => m.id === messageId);
     if (!messageToSave) return;
 
     const { error } = await supabase
@@ -207,7 +240,7 @@ export default function ChatComponent({ userId }: { userId: string }) {
   }, [selectedModel, apiKeys]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
+    <div className={`flex flex-col h-screen bg-gray-100 dark:bg-gray-900 ${theme}`}>
       <Toaster position="top-right" />
       <header className="bg-white dark:bg-gray-800 shadow-md p-4">
         <div className="flex items-center justify-between">
@@ -233,7 +266,12 @@ export default function ChatComponent({ userId }: { userId: string }) {
           onSave={saveApiKeys}
         />
         <main className="flex-1 flex flex-col">
-          <ChatMessages messages={messages} onSaveResponse={handleSaveResponse} savedResponses={savedResponses} />
+          <ChatMessages 
+            messages={messages} 
+            onSaveResponse={handleSaveResponse} 
+            savedResponses={savedResponses} 
+            userEmail={session?.user?.email || ''}
+          />
           <ChatInput input={input} onInputChange={handleInputChange} onSubmit={handleChatSubmit} />
         </main>
       </div>
@@ -258,7 +296,16 @@ function ConnectionStatus({ status }: { status: 'connected' | 'disconnected' | '
   );
 }
 
-function Sidebar({ isOpen, selectedModel, apiKeys, onModelChange, onApiKeyChange, onSave }) {
+interface SidebarProps {
+  isOpen: boolean;
+  selectedModel: string;
+  apiKeys: ApiKeys;
+  onModelChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onApiKeyChange: (provider: string, value: string) => void;
+  onSave: () => void;
+}
+
+function Sidebar({ isOpen, selectedModel, apiKeys, onModelChange, onApiKeyChange, onSave }: SidebarProps) {
   return (
     <div className={`w-64 bg-white dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-4">
@@ -296,12 +343,22 @@ function Sidebar({ isOpen, selectedModel, apiKeys, onModelChange, onApiKeyChange
   );
 }
 
-function ChatMessages({ messages, onSaveResponse, savedResponses }) {
+interface ChatMessagesProps {
+  messages: Array<{ id: string; role: string; content: string }>;
+  onSaveResponse: (messageId: string) => void;
+  savedResponses: Set<string>;
+  userEmail: string;
+}
+
+function ChatMessages({ messages, onSaveResponse, savedResponses, userEmail }: ChatMessagesProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map(m => (
         <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
           <div className={`max-w-3/4 p-3 rounded-lg ${m.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-black dark:text-white'}`}>
+            <p className="mb-1 text-sm font-semibold">
+              {m.role === 'user' ? userEmail : 'AI Assistant'}
+            </p>
             <p>{m.content}</p>
             {m.role === 'assistant' && (
               <button
@@ -319,7 +376,13 @@ function ChatMessages({ messages, onSaveResponse, savedResponses }) {
   );
 }
 
-function ChatInput({ input, onInputChange, onSubmit }) {
+interface ChatInputProps {
+  input: string;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+}
+
+function ChatInput({ input, onInputChange, onSubmit }: ChatInputProps) {
   return (
     <form onSubmit={onSubmit} className="p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
       <div className="flex space-x-2">

@@ -1,18 +1,18 @@
 'use client';
 
+import React from 'react';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { FaSun, FaMoon } from 'react-icons/fa';
 
-export default function ThemeToggle() {
+export const ThemeToggle: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-full bg-gray-200 dark:bg-gray-700"
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
     >
-      {theme === 'light' ? <FaMoon className="text-gray-800" /> : <FaSun className="text-yellow-400" />}
+      {theme === 'light' ? <FaMoon /> : <FaSun />}
     </button>
   );
-}
+};

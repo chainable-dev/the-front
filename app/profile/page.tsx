@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import AuthenticatedLayout from '../components/AuthenticatedLayout';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
+import { useTheme } from '../contexts/ThemeContext';
 
-const ProfilePage = () => {
+export default function ProfilePage() {
+  const { theme, toggleTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState('');
   const [initials, setInitials] = useState('');
@@ -26,9 +27,10 @@ const ProfilePage = () => {
       }
     };
     fetchUser();
-  }, []);
+  }, [supabase]);
 
   const updateProfile = async () => {
+    if (!user) return;
     const { error } = await supabase
       .from('users')
       .update({ full_name: fullName, initials })
@@ -42,47 +44,46 @@ const ProfilePage = () => {
   };
 
   return (
-    <AuthenticatedLayout>
-      <div className="container mx-auto mt-8 p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Profile</h1>
-          <Link href="/taskboard" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Back to Dashboard
-          </Link>
-        </div>
-        {user && (
-          <div>
-            <p className="mb-2"><strong>Email:</strong> {user.email}</p>
-            <div className="mb-4">
-              <label className="block mb-2">Full Name:</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2">Initials:</label>
-              <input
-                type="text"
-                value={initials}
-                onChange={(e) => setInitials(e.target.value)}
-                className="w-full p-2 border rounded"
-                maxLength={2}
-              />
-            </div>
-            <button
-              onClick={updateProfile}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Update Profile
-            </button>
-          </div>
-        )}
+    <div className={`container mx-auto mt-8 p-4 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Profile</h1>
+        <Link href="/taskboard" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Back to Dashboard
+        </Link>
       </div>
-    </AuthenticatedLayout>
+      {user && (
+        <div>
+          <p className="mb-2"><strong>Email:</strong> {user.email}</p>
+          <div className="mb-4">
+            <label className="block mb-2">Full Name:</label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-2">Initials:</label>
+            <input
+              type="text"
+              value={initials}
+              onChange={(e) => setInitials(e.target.value)}
+              className="w-full p-2 border rounded"
+              maxLength={2}
+            />
+          </div>
+          <button
+            onClick={updateProfile}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Update Profile
+          </button>
+          <button onClick={toggleTheme} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+            Toggle Theme
+          </button>
+        </div>
+      )}
+    </div>
   );
-};
-
-export default ProfilePage;
+}

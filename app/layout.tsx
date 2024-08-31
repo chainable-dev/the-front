@@ -1,18 +1,24 @@
-import './globals.css'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { ThemeProvider } from './contexts/ThemeContext';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
+  const supabase = createServerComponentClient({ cookies });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return (
     <html lang="en">
-      <ThemeProvider>
-        <body>
+      <body>
+        <ThemeProvider>
           {children}
-        </body>
-      </ThemeProvider>
+        </ThemeProvider>
+      </body>
     </html>
-  )
+  );
 }
