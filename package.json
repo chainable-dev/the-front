@@ -2,7 +2,6 @@
   "private": true,
   "scripts": {
     "test": "jest --config jest.config.js",
-
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
