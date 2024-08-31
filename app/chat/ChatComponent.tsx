@@ -6,6 +6,7 @@ import { useTheme } from '@/app/contexts/ThemeContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { useChat } from 'ai/react';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 interface ChatHistory {
   id: string;
@@ -33,8 +34,7 @@ interface ChatComponentProps {
   userId: string;
 }
 
-export default function ChatComponent({ userId }: ChatComponentProps) {
-  const { data: session } = useSession();
+function ChatComponentInner({ userId, session }: ChatComponentProps & { session: any }) {
   const { theme } = useTheme();
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -244,16 +244,27 @@ export default function ChatComponent({ userId }: ChatComponentProps) {
       <Toaster position="top-right" />
       <header className="bg-white dark:bg-gray-800 shadow-md p-4">
         <div className="flex items-center justify-between">
-          <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
-            <FaBars size={24} />
-          </button>
-          <h1 className="text-2xl font-bold text-black dark:text-white">TheApp AI Chatbot</h1>
           <div className="flex items-center space-x-4">
+            <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+              <FaBars size={24} />
+            </button>
+            <h1 className="text-2xl font-bold text-black dark:text-white">TheApp AI Chatbot</h1>
+          </div>
+          <nav className="flex items-center space-x-4">
+            <Link href="/" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+              Home
+            </Link>
+            <Link href="/chat" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+              Chat
+            </Link>
+            <Link href="/profile" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+              Profile
+            </Link>
             <ConnectionStatus status={connectionStatus} />
             <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
               <FaCog size={24} />
             </button>
-          </div>
+          </nav>
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
@@ -400,5 +411,18 @@ function ChatInput({ input, onInputChange, onSubmit }: ChatInputProps) {
         </button>
       </div>
     </form>
+  );
+}
+
+function SessionWrapper({ children, userId }: { children: React.ReactElement, userId: string }) {
+  const { data: session } = useSession();
+  return React.cloneElement(children, { session, userId });
+}
+
+export default function ChatComponent({ userId }: ChatComponentProps) {
+  return (
+    <SessionWrapper userId={userId}>
+      <ChatComponentInner userId={userId} session={undefined} />
+    </SessionWrapper>
   );
 }

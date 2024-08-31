@@ -1,3 +1,5 @@
+'use client';  // Add this line at the top of the file
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type Theme = 'light' | 'dark';

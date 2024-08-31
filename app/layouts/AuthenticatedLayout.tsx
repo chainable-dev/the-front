@@ -1,6 +1,6 @@
 import React from 'react';
-import Header from '@/components/Header';
-import styles from './AuthenticatedLayout.module.css';
+import { Header } from '@/components/Header';
+import SideNav from '@/components/SideNav';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -8,9 +8,12 @@ interface AuthenticatedLayoutProps {
 
 const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) => {
   return (
-    <div className={styles.layout}>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Header />
-      <main className={styles.main}>{children}</main>
+      <div className="flex">
+        <SideNav />
+        <main className="flex-grow p-8">{children}</main>
+      </div>
     </div>
   );
 };

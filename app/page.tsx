@@ -1,15 +1,26 @@
-import ChatComponent from './chat/ChatComponent';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+'use client';
 
-export default async function Home() {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: { session } } = await supabase.auth.getSession();
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-  if (!session) {
-    // Handle unauthenticated state, maybe redirect to login
-    return <div>Please log in to use the chat.</div>;
-  }
+export default function RootPage() {
+  const router = useRouter();
+  const supabase = createClientComponentClient();
 
-  return <ChatComponent userId={session.user.id} />;
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/taskboard');
+      } else {
+        router.push('/login');
+      }
+    };
+
+    checkAuth();
+  }, [router, supabase]);
+
+  // Return null or a loading indicator while checking authentication
+  return null;
 }
