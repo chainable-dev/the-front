@@ -22,4 +22,24 @@ describe('Label', () => {
     expect(ref.current).toBeInstanceOf(HTMLLabelElement)
     expect(ref.current?.textContent).toBe('Ref Label')
   })
+
+  // New test for login form
+  it('renders correctly in a login form context', () => {
+    render(
+      <form>
+        <Label htmlFor="username">Username</Label>
+        <input id="username" type="text" />
+        <Label htmlFor="password">Password</Label>
+        <input id="password" type="password" />
+      </form>
+    )
+
+    const usernameLabel = screen.getByText('Username')
+    const passwordLabel = screen.getByText('Password')
+
+    expect(usernameLabel).toHaveAttribute('for', 'username')
+    expect(passwordLabel).toHaveAttribute('for', 'password')
+    expect(usernameLabel).toHaveClass('text-sm font-medium leading-none')
+    expect(passwordLabel).toHaveClass('text-sm font-medium leading-none')
+  })
 })
