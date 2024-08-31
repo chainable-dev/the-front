@@ -1,20 +1,13 @@
+import React from 'react';
 import AuthenticatedLayout from '@/app/layouts/AuthenticatedLayout';
-import Board from "@/components/todo/Board";
 
-interface Params {
-    id: string;
-}
-
-interface WorkboardPageProps {
-    params: Params;
-}
-
-const WorkboardPage: React.FC<WorkboardPageProps> = ({ params }) => {
+export default function BoardPage() {
     return (
         <AuthenticatedLayout>
-            <Board />
+            <div className="p-4">
+                <h1 className="text-2xl font-bold">Board</h1>
+                <p className="text-gray-600 dark:text-gray-300">This is the board page.</p>
+            </div>
         </AuthenticatedLayout>
     );
-};
-
-export default WorkboardPage;
+}

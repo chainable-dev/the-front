@@ -8,15 +8,9 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies });
-    try {
-      await supabase.auth.exchangeCodeForSession(code);
-      console.log('Successfully exchanged code for session');
-    } catch (error) {
-      console.error('Error exchanging code for session:', error);
-      // You might want to redirect to an error page here
-      return NextResponse.redirect(`${requestUrl.origin}/auth-error`);
-    }
+    await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(`${requestUrl.origin}/taskboard`);
+  // Redirect to the home page after successful authentication
+  return NextResponse.redirect(new URL('/', requestUrl.origin));
 }
