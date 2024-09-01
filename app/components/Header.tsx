@@ -5,6 +5,11 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from '../contexts/ThemeContext';
+import { useUser } from '@/app/hooks/useUser';
+import { Menu, Transition } from '@headlessui/react';
+import Image from 'next/image';
+import { Fragment } from 'react';
+import { LogOut, User } from 'lucide-react';
 
 const Header = () => {
   const [user, setUser] = useState<any>(null);
@@ -13,6 +18,7 @@ const Header = () => {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { user: userFromHook, logout } = useUser();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -60,27 +66,57 @@ const Header = () => {
             >
               {theme === 'dark' ? '🌞' : '🌙'}
             </button>
-            {user && (
-              <div className="relative">
-                <button 
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`rounded-full w-10 h-10 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-500'}`}
+            {userFromHook && (
+              <Menu as="div" className="relative inline-block text-left">
+                <div>
+                  <Menu.Button className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <span className="sr-only">Open user menu</span>
+                    <span className="text-sm font-medium">{getInitials(userFromHook.name)}</span>
+                  </Menu.Button>
+                </div>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
                 >
-                  {user.initials || user.email[0].toUpperCase()}
-                </button>
-                {isDropdownOpen && (
-                  <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg z-10 ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
-                    <Link href="/profile" className={`block px-4 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}>Profile</Link>
-                    <Link href="/settings" className={`block px-4 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-100'}`}>Settings</Link>
-                    <button 
-                      onClick={handleSignOut}
-                      className={`block w-full text-left px-4 py-2 text-sm ${theme === 'dark' ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-gray-100'}`}
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
+                  <Menu.Items className="absolute right-0 w-56 mt-2 origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="px-4 py-3">
+                      <p className="text-sm">Signed in as</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{userFromHook.email}</p>
+                    </div>
+                    <div className="py-1">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <a
+                            href="#"
+                            className={`${
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                            } block px-4 py-2 text-sm`}
+                          >
+                            Account settings
+                          </a>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={logout}
+                            className={`${
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                            } block w-full text-left px-4 py-2 text-sm`}
+                          >
+                            Sign out
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
             )}
           </div>
         </div>
@@ -120,5 +156,14 @@ const Header = () => {
     </>
   );
 };
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default Header;
