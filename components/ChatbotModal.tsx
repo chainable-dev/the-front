@@ -1,54 +1,66 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { useChat } from '@vercel/ai';
+import { Modal, Input, Button, Text, Loading } from '@geist-ui/core';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
-const ChatbotModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const [message, setMessage] = useState('');
+interface ChatbotModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-  const handleSend = () => {
-    console.log("Message sent:", message);
-    setMessage(''); // Clear the input after sending
+export default function ChatbotModal({ isOpen, onClose }: ChatbotModalProps) {
+  const { data: session, status } = useSession();
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await handleSubmit(e);
+    } catch (err) {
+      setError('An error occurred while sending the message. Please try again.');
+    }
   };
 
-  if (!isOpen) return null;
+  if (status === 'loading') {
+    return <Loading>Loading...</Loading>;
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto p-6 rounded-lg shadow-lg bg-white">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold">Chatbot</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col space-y-4">
-          <div className="flex-grow">
-            <div className="h-64 overflow-y-auto border border-gray-300 rounded-lg p-4">
-              <div className="text-gray-700">Chatbot: How can I assist you today?</div>
-              <div className="text-gray-700">User: I need help with my project.</div>
+    <Modal open={isOpen} onClose={onClose} width="35rem">
+      <Modal.Title>Chatbot</Modal.Title>
+      <Modal.Content>
+        {session ? (
+          <>
+            <div style={{ height: '300px', overflowY: 'auto', marginBottom: '1rem' }}>
+              {messages.map((message, index) => (
+                <div key={index} style={{ marginBottom: '0.5rem', textAlign: message.role === 'user' ? 'right' : 'left' }}>
+                  <Text small b>{message.role === 'user' ? 'You' : 'Bot'}:</Text>
+                  <Text small>{message.content}</Text>
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="flex">
-            <Input
-              type="text"
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="flex-grow mr-2"
-            />
-            <Button onClick={handleSend} className="bg-blue-500 text-white">
-              Send
-            </Button>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="mt-4">
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <form onSubmit={handleFormSubmit}>
+              <Input 
+                width="100%" 
+                value={input} 
+                onChange={(e) => handleInputChange(e as any)} 
+                placeholder="Type your message..."
+                disabled={isLoading}
+              />
+              <Button type="success" htmlType="submit" style={{ marginTop: '1rem' }} loading={isLoading}>Send</Button>
+            </form>
+            {error && <Text type="error">{error}</Text>}
+            <Button onClick={() => signOut()} style={{ marginTop: '1rem' }}>Sign Out</Button>
+          </>
+        ) : (
+          <Button onClick={() => signIn('google')}>Sign In with Google</Button>
+        )}
+      </Modal.Content>
+      <Modal.Action passive onClick={onClose}>Close</Modal.Action>
+    </Modal>
   );
-};
-
-export default ChatbotModal;
+}
